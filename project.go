@@ -23,6 +23,7 @@ const (
 type Project struct {
 	ExpressionEngine string
 	Depth            BPC
+	RootFolder       *Item
 }
 
 // FromReader reads and creates a new project instance from an After Effects project file
@@ -50,12 +51,14 @@ func Open(path string) (*Project, error) {
 // parseProject is an internal helper to decode AEP RIFF blocks
 func parseProject(root *rifx.List) (*Project, error) {
 	project := &Project{}
+
 	// Parse expression engine
 	expressionEngineList, err := root.SublistFind("ExEn")
 	if err != nil {
 		return nil, err
 	}
 	project.ExpressionEngine = expressionEngineList.Blocks[0].ToString()
+
 	// Parse project head block
 	type ProjectNhed struct {
 		Unknown00 [15]uint8
@@ -68,5 +71,17 @@ func parseProject(root *rifx.List) (*Project, error) {
 	}
 	nhedBlock.ToStruct(nhed)
 	project.Depth = nhed.Depth
+
+	// Parse root projet folder
+	rootFolderList, err := root.SublistFind("Fold")
+	if err != nil {
+		return nil, err
+	}
+	folder, err := parseItem(rootFolderList)
+	if err != nil {
+		return nil, err
+	}
+	project.RootFolder = folder
+
 	return project, nil
 }
