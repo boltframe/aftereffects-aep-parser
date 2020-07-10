@@ -12,11 +12,11 @@ type BPC uint8
 
 const (
 	// BPC8 enumerates 8-bits-per-channel
-	BPC8 = 0x00
+	BPC8 BPC = 0x00
 	// BPC16 enumerates 16-bits-per-channel
-	BPC16 = 0x01
+	BPC16 BPC = 0x01
 	// BPC32 enumerates 32-bits-per-channel
-	BPC32 = 0x02
+	BPC32 BPC = 0x02
 )
 
 // Project holds information about an After Effects project file
