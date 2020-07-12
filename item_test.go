@@ -39,4 +39,16 @@ func TestItemMetadata(t *testing.T) {
 	expect(t, comp02.FootageFramerate, float64(29.97))
 	expect(t, comp02.FootageSeconds, float64(71.338004671338))
 	expect(t, comp02.BackgroundColor, [3]byte{145, 206, 85})
+
+	footageFolder := project.RootFolder.FolderContents[2]
+	expect(t, footageFolder.Name, "Footage")
+	expect(t, footageFolder.ID, uint32(70))
+
+	placeholderFootage := footageFolder.FolderContents[2]
+	expect(t, placeholderFootage.Name, "Missing Footage")
+	expect(t, placeholderFootage.ID, uint32(71))
+	expect(t, placeholderFootage.TypeName, ItemTypeFootage)
+	expect(t, placeholderFootage.FootageSeconds, float64(127))
+	expect(t, placeholderFootage.FootageFramerate, float64(123.45669555664062))
+	expect(t, placeholderFootage.FootageDimensions, [2]uint16{1234, 5678})
 }

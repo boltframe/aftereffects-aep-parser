@@ -1,6 +1,9 @@
 package aep
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/rioam2/rifx"
 )
 
@@ -79,6 +82,42 @@ func parseItem(itemHead *rifx.List) (*Item, error) {
 			}
 			item.FolderContents = append(item.FolderContents, childItem)
 		}
+	case ItemTypeFootage:
+		pinList, err := itemHead.SublistFind("Pin ")
+		if err != nil {
+			return nil, err
+		}
+		sspcBlock, err := pinList.FindByType("sspc")
+		if err != nil {
+			return nil, err
+		}
+		type SSPC struct {
+			Unknown00         [30]byte // Offset 0B
+			Width             uint32   // Offset 30B
+			Height            uint32   // Offset 34B
+			SecondsDividend   uint32   // Offset 38B
+			SecondsDivisor    uint32   // Offset 42B
+			Unknown01         [10]byte // Offset 46B
+			Framerate         uint32   // Offset 56B
+			FramerateDividend uint16   // Offset 60B
+		}
+		sspcDesc := &SSPC{}
+		sspcBlock.ToStruct(sspcDesc)
+		item.FootageDimensions = [2]uint16{uint16(sspcDesc.Width), uint16(sspcDesc.Height)}
+		item.FootageFramerate = float64(sspcDesc.Framerate) + (float64(sspcDesc.FramerateDividend) / float64(1<<16))
+		item.FootageSeconds = float64(sspcDesc.SecondsDividend) / float64(sspcDesc.SecondsDivisor)
+
+		optiBlock, err := pinList.FindByType("opti")
+		if err != nil {
+			return nil, err
+		}
+		type OPTI struct {
+			Unknown00 [10]byte  // Offset 0B
+			Name      [256]byte // Offset 10B
+		}
+		optiDesc := &OPTI{}
+		optiBlock.ToStruct(optiDesc)
+		item.Name = fmt.Sprintf("%s", bytes.Trim(optiDesc.Name[:], "\x00"))
 	case ItemTypeComposition:
 		type CDTA struct {
 			Unknown00         [4]byte  // Offset 0B
