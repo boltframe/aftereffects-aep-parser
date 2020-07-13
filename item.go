@@ -2,6 +2,7 @@ package aep
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/rioam2/rifx"
@@ -19,6 +20,16 @@ const (
 	ItemTypeFootage ItemTypeName = "Footage"
 )
 
+// FootageType denotes the type of footage of an AVItem (eg: Solid, Placeholder, ...)
+type FootageType uint16
+
+const (
+	// FootageTypeSolid denotes a Solid source
+	FootageTypeSolid FootageType = 0x09
+	// FootageTypePlaceholder denotes a Placeholder source
+	FootageTypePlaceholder FootageType = 0x02
+)
+
 // Item is a generalized object storing information about folders, compositions, or footage
 type Item struct {
 	Name              string
@@ -28,6 +39,7 @@ type Item struct {
 	FootageDimensions [2]uint16
 	FootageFramerate  float64
 	FootageSeconds    float64
+	FootageType       FootageType
 	BackgroundColor   [3]byte
 }
 
@@ -111,13 +123,14 @@ func parseItem(itemHead *rifx.List) (*Item, error) {
 		if err != nil {
 			return nil, err
 		}
-		type OPTI struct {
-			Unknown00 [10]byte  // Offset 0B
-			Name      [256]byte // Offset 10B
+		optiData := optiBlock.Data.([]byte)
+		item.FootageType = FootageType(binary.BigEndian.Uint16(optiData[4:6]))
+		switch item.FootageType {
+		case FootageTypeSolid:
+			item.Name = fmt.Sprintf("%s", bytes.ReplaceAll(bytes.Trim(optiData[26:255], "\x00"), []byte{0}, []byte{32}))
+		case FootageTypePlaceholder:
+			item.Name = fmt.Sprintf("%s", bytes.ReplaceAll(bytes.Trim(optiData[10:], "\x00"), []byte{0}, []byte{32}))
 		}
-		optiDesc := &OPTI{}
-		optiBlock.ToStruct(optiDesc)
-		item.Name = fmt.Sprintf("%s", bytes.Trim(optiDesc.Name[:], "\x00"))
 	case ItemTypeComposition:
 		type CDTA struct {
 			Unknown00         [4]byte  // Offset 0B

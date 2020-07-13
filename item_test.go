@@ -51,4 +51,8 @@ func TestItemMetadata(t *testing.T) {
 	expect(t, placeholderFootage.FootageSeconds, float64(127))
 	expect(t, placeholderFootage.FootageFramerate, float64(123.45669555664062))
 	expect(t, placeholderFootage.FootageDimensions, [2]uint16{1234, 5678})
+
+	redSolid := footageFolder.FolderContents[3]
+	expect(t, redSolid.FootageType, FootageTypeSolid)
+	expect(t, redSolid.Name, "Red Solid 1")
 }
