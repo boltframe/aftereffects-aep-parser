@@ -8,7 +8,7 @@ import (
 	"github.com/rioam2/rifx"
 )
 
-// ItemTypeName denotes the type of item. See: http://docs.aenhancers.com/items/item/#item-typename
+// ItemTypeName denotes the type of item. See: http://docs.aenhancers.com/items/item/#item-ItemType
 type ItemTypeName string
 
 const (
@@ -20,30 +20,31 @@ const (
 	ItemTypeFootage ItemTypeName = "Footage"
 )
 
-// FootageType denotes the type of footage of an AVItem (eg: Solid, Placeholder, ...)
-type FootageType uint16
+// FootageTypeName denotes the type of footage of an AVItem (eg: Solid, Placeholder, ...)
+type FootageTypeName uint16
 
 const (
 	// FootageTypeSolid denotes a Solid source
-	FootageTypeSolid FootageType = 0x09
+	FootageTypeSolid FootageTypeName = 0x09
 	// FootageTypePlaceholder denotes a Placeholder source
-	FootageTypePlaceholder FootageType = 0x02
+	FootageTypePlaceholder FootageTypeName = 0x02
 )
 
 // Item is a generalized object storing information about folders, compositions, or footage
 type Item struct {
 	Name              string
 	ID                uint32
-	TypeName          ItemTypeName
+	ItemType          ItemTypeName
 	FolderContents    []*Item
 	FootageDimensions [2]uint16
 	FootageFramerate  float64
 	FootageSeconds    float64
-	FootageType       FootageType
+	FootageType       FootageTypeName
 	BackgroundColor   [3]byte
+	CompositionLayers []*Layer
 }
 
-func parseItem(itemHead *rifx.List) (*Item, error) {
+func parseItem(itemHead *rifx.List, project *Project) (*Item, error) {
 	item := &Item{}
 	isRoot := itemHead.Identifier == "Fold"
 
@@ -51,7 +52,7 @@ func parseItem(itemHead *rifx.List) (*Item, error) {
 	if isRoot {
 		item.ID = 0
 		item.Name = "root"
-		item.TypeName = ItemTypeFolder
+		item.ItemType = ItemTypeFolder
 	} else {
 		nameBlock, err := itemHead.FindByType("Utf8")
 		if err != nil {
@@ -75,20 +76,20 @@ func parseItem(itemHead *rifx.List) (*Item, error) {
 		item.ID = itemDescriptor.ID
 		switch itemDescriptor.Type {
 		case 0x01:
-			item.TypeName = ItemTypeFolder
+			item.ItemType = ItemTypeFolder
 		case 0x04:
-			item.TypeName = ItemTypeComposition
+			item.ItemType = ItemTypeComposition
 		case 0x07:
-			item.TypeName = ItemTypeFootage
+			item.ItemType = ItemTypeFootage
 		}
 	}
 
 	// Parse unique item type information
-	switch item.TypeName {
+	switch item.ItemType {
 	case ItemTypeFolder:
 		childItemLists := append(itemHead.SublistFilter("Item"), itemHead.SublistMerge("Sfdr").SublistFilter("Item")...)
 		for _, childItemList := range childItemLists {
-			childItem, err := parseItem(childItemList)
+			childItem, err := parseItem(childItemList, project)
 			if err != nil {
 				return nil, err
 			}
@@ -124,7 +125,7 @@ func parseItem(itemHead *rifx.List) (*Item, error) {
 			return nil, err
 		}
 		optiData := optiBlock.Data.([]byte)
-		item.FootageType = FootageType(binary.BigEndian.Uint16(optiData[4:6]))
+		item.FootageType = FootageTypeName(binary.BigEndian.Uint16(optiData[4:6]))
 		switch item.FootageType {
 		case FootageTypeSolid:
 			item.Name = fmt.Sprintf("%s", bytes.ReplaceAll(bytes.Trim(optiData[26:255], "\x00"), []byte{0}, []byte{32}))
@@ -156,7 +157,20 @@ func parseItem(itemHead *rifx.List) (*Item, error) {
 		item.FootageFramerate = float64(compDesc.FramerateDividend) / float64(compDesc.FramerateDivisor)
 		item.FootageSeconds = float64(compDesc.SecondsDividend) / float64(compDesc.SecondsDivisor)
 		item.BackgroundColor = compDesc.BackgroundColor
+
+		// Parse composition's layers
+		for index, layerListHead := range itemHead.SublistFilter("Layr") {
+			layer, err := parseLayer(layerListHead, project)
+			if err != nil {
+				return nil, err
+			}
+			layer.Index = uint32(index + 1)
+			item.CompositionLayers = append(item.CompositionLayers, layer)
+		}
 	}
+
+	// Insert item into project items map
+	project.Items[item.ID] = item
 
 	return item, nil
 }
