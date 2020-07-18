@@ -56,6 +56,7 @@ type Layer struct {
 	EffectsEnabled           bool
 	AudioEnabled             bool
 	VideoEnabled             bool
+	Effects                  []*Property
 }
 
 func parseLayer(layerHead *rifx.List, project *Project) (*Layer, error) {
@@ -96,5 +97,19 @@ func parseLayer(layerHead *rifx.List, project *Project) (*Layer, error) {
 		return nil, err
 	}
 	layer.Name = nameBlock.ToString()
+
+	rootTDGP, _ := indexedGroupToMap(layerHead.SublistMerge("tdgp"))
+
+	effectsTDGP := rootTDGP["ADBE Effect Parade"]
+	if effectsTDGP == nil {
+		layer.Effects = make([]*Property, 0)
+	} else {
+		effectsProp, err := parseProperty(effectsTDGP, "ADBE Effect Parade")
+		if err != nil {
+			return nil, err
+		}
+		layer.Effects = effectsProp.Properties
+	}
+
 	return layer, nil
 }
