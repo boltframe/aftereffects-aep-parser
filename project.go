@@ -56,10 +56,9 @@ func parseProject(root *rifx.List) (*Project, error) {
 
 	// Parse expression engine
 	expressionEngineList, err := root.SublistFind("ExEn")
-	if err != nil {
-		return nil, err
+	if err == nil {
+		project.ExpressionEngine = expressionEngineList.Blocks[0].ToString()
 	}
-	project.ExpressionEngine = expressionEngineList.Blocks[0].ToString()
 
 	// Parse project head block
 	type ProjectNhed struct {
