@@ -76,6 +76,7 @@ func parseProperty(propData interface{}, matchName string) (*Property, error) {
 
 	// Apply some sensible default values
 	prop.PropertyType = PropertyTypeCustom
+	prop.SelectOptions = make([]string, 0)
 	prop.MatchName = matchName
 	prop.Name = matchName
 	switch matchName {
