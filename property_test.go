@@ -11,8 +11,13 @@ func TestPropertyParsing(t *testing.T) {
 	}
 
 	comp01 := project.RootFolder.FolderContents[0]
+	textLayer := comp01.CompositionLayers[1]
+	expect(t, len(textLayer.Effects), 0)
+	expect(t, textLayer.Text != nil)
+
 	expressionControlsLayer := comp01.CompositionLayers[0]
 	expect(t, len(expressionControlsLayer.Effects), 7)
+	expect(t, expressionControlsLayer.Text == nil)
 
 	checkboxEffect := expressionControlsLayer.Effects[0]
 	expect(t, checkboxEffect.Index, uint32(1))
