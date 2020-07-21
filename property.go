@@ -35,6 +35,32 @@ const (
 	PropertyTypeCustom PropertyTypeName = 0x0f
 )
 
+// String translates a property type enumeration to string
+func (p PropertyTypeName) String() string {
+	switch p {
+	case PropertyTypeBoolean:
+		return "Boolean"
+	case PropertyTypeOneD:
+		return "OneD"
+	case PropertyTypeTwoD:
+		return "TwoD"
+	case PropertyTypeThreeD:
+		return "ThreeD"
+	case PropertyTypeColor:
+		return "Color"
+	case PropertyTypeAngle:
+		return "Angle"
+	case PropertyTypeLayerSelect:
+		return "LayerSelect"
+	case PropertyTypeSelect:
+		return "Select"
+	case PropertyTypeGroup:
+		return "Group"
+	default:
+		return "Custom"
+	}
+}
+
 // Property describes a property object of a layer or nested property
 type Property struct {
 	MatchName     string
@@ -50,6 +76,7 @@ func parseProperty(propData interface{}, matchName string) (*Property, error) {
 
 	// Apply some sensible default values
 	prop.PropertyType = PropertyTypeCustom
+	prop.SelectOptions = make([]string, 0)
 	prop.MatchName = matchName
 	prop.Name = matchName
 	switch matchName {
