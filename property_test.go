@@ -88,6 +88,7 @@ func TestPropertyParsing(t *testing.T) {
 	expect(t, angleEffect.Index, uint32(6))
 	expect(t, angleEffect.MatchName, "ADBE Angle Control")
 	expect(t, angleEffect.Name, "Angle Control")
+	expect(t, angleEffect.Label, "Custom Angle Control Label")
 	expect(t, angleEffect.PropertyType, PropertyTypeGroup)
 	expect(t, len(angleEffect.Properties), 1)
 	expect(t, angleEffect.Properties[0].Index, uint32(1))

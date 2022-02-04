@@ -65,6 +65,7 @@ func (p PropertyTypeName) String() string {
 type Property struct {
 	MatchName     string
 	Name          string
+	Label         string
 	Index         uint32
 	PropertyType  PropertyTypeName
 	Properties    []*Property
@@ -105,6 +106,21 @@ func parseProperty(propData interface{}, matchName string) (*Property, error) {
 			fnamBlock, err := propHead.FindByType("fnam")
 			if err == nil {
 				prop.Name = fnamBlock.ToString()
+			}
+			tdgpBlock, err := propHead.SublistFind("tdgp")
+			if err == nil {
+				fmt.Println("DEBUUUUUUGGG ===========================")
+				fmt.Println(tdgpBlock)
+
+				// Look for a tdsn which specifies the user-defined label of the property
+				tdsnBlock, err := tdgpBlock.FindByType("tdsn")
+				if err == nil {
+					label := fmt.Sprintf("%s", tdsnBlock.ToString())
+
+					if label != "-_0_/-" {
+						prop.Label = label
+					}
+				}
 			}
 			parTList := propHead.SublistMerge("parT")
 			subPropMatchNames, subPropPards := pairMatchNames(parTList)
