@@ -109,8 +109,6 @@ func parseProperty(propData interface{}, matchName string) (*Property, error) {
 			}
 			tdgpBlock, err := propHead.SublistFind("tdgp")
 			if err == nil {
-				fmt.Println("DEBUUUUUUGGG ===========================")
-				fmt.Println(tdgpBlock)
 
 				// Look for a tdsn which specifies the user-defined label of the property
 				tdsnBlock, err := tdgpBlock.FindByType("tdsn")
