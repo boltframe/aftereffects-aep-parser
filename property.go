@@ -115,6 +115,8 @@ func parseProperty(propData interface{}, matchName string) (*Property, error) {
 				if err == nil {
 					label := fmt.Sprintf("%s", tdsnBlock.ToString())
 
+					// Check if there is a custom user defined label added. The default if there
+					// is not is "-_0_/-" for some unknown reason.
 					if label != "-_0_/-" {
 						prop.Label = label
 					}
